@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""news-image-20261118 v3 — one-page newspaper front page for
+"""news-image-20261118 v4 — one-page newspaper front page for
 Wednesday 18 November 2026. 47 verified stories, 13 illustrated.
 
 Pure standard-library program: draws the whole page with vector
@@ -7,6 +7,11 @@ primitives + embedded bitmap fonts into a 2x supersampled buffer,
 downsamples to 1024x1024, and writes a PNG with a hand-rolled encoder
 (zlib). No network, no files read, no randomness — two runs produce
 byte-identical output.
+
+v4 changes vs v3: illustrations ONLY — the 3 hero scenes and the 10
+grid icons are redrawn as richer multi-element scenes (ships, jets,
+arches, charts, maps, vehicles); every story, fact, headline, deck,
+label position, font and layout coordinate is unchanged from v3.
 
 v3 changes vs v2: real bitmap typography (Liberation Serif/Sans,
 rasterized at build time, embedded as a compressed blob); 47 stories
@@ -765,8 +770,10 @@ def badge(x, y, n, r=None):
 
 
 # ---------------------------------------------------------------------------
-# Illustrations — flat vector drawings, one per story.
-# Hero illustrations are 318x88; grid icons are 190x54.
+# Illustrations — enriched vector scenes, one per story (v4).
+# Hero illustrations are 318x88; grid icons are 190x54. All label
+# strings and positions are unchanged from v3; only the drawn
+# graphics around them are richer.
 # ---------------------------------------------------------------------------
 
 def _flag(x, y, code):
@@ -791,41 +798,122 @@ def _flag(x, y, code):
 
 def ill_gulf(x, y, w, h):
     rect(x, y, x + w, y + h, SEA)
+    # darker strait channel between Iran and the Arabian shore
+    fill_poly([(x + 150, y), (x + 190, y), (x + 250, y + 40),
+               (x + 260, y + h), (x + 210, y + h), (x + 150, y + 40)],
+              (168, 200, 222))
+    # wave marks on open water
+    for wx, wy in [(30, 40), (60, 30), (120, 62), (140, 74), (250, 34),
+                   (285, 44), (200, 70), (130, 78)]:
+        line(x + wx, y + wy, x + wx + 8, y + wy, (230, 240, 248), 1.0)
     fill_poly([(x, y + h), (x, y + 55), (x + 55, y + 50), (x + 95, y + 68),
                (x + 110, y + h)], SAND)
     fill_poly([(x + 160, y), (x + w, y), (x + w, y + 30), (x + 215, y + 28),
                (x + 185, y + 12)], SAND)
+    # UAE / Oman shore, lower right — narrows the strait at Hormuz
+    fill_poly([(x + 235, y + h), (x + 250, y + 62), (x + 285, y + 58),
+               (x + w, y + 66), (x + w, y + h)], SAND)
     fill_poly([(x + 178, y + 38), (x + 208, y + 34), (x + 218, y + 42),
                (x + 192, y + 48), (x + 175, y + 45)], LAND)
+    # oil tanker threading the strait
+    fill_poly([(x + 228, y + 48), (x + 272, y + 48), (x + 278, y + 56),
+               (x + 222, y + 56)], DARK)
+    rect(x + 252, y + 40, x + 262, y + 48, WHITE)
+    rect(x + 256, y + 36, x + 260, y + 40, RED)
+    # US jet with contrail, upper left
+    dashed_line(x + 32, y + 26, x + 52, y + 30, WHITE, 1.0, dash=4, gap=3)
+    fill_poly([(x + 52, y + 30), (x + 72, y + 27), (x + 78, y + 30),
+               (x + 72, y + 33)], (90, 100, 115))
+    fill_poly([(x + 60, y + 29), (x + 64, y + 24), (x + 67, y + 29)],
+              (90, 100, 115))
+    fill_poly([(x + 60, y + 31), (x + 64, y + 36), (x + 67, y + 31)],
+              (90, 100, 115))
+    # radar dome on Bahrain (the US site the drones targeted)
+    circle(x + 70, y + 64, 6, WHITE)
+    rect(x + 64, y + 64, x + 76, y + 70, SAND)
+    line(x + 70, y + 58, x + 70, y + 52, DARK, 1.5)
+    circle(x + 70, y + 51, 1.5, RED)
     dashed_line(x + 205, y + 22, x + 150, y + 50, DARK, 1.0)
     dashed_line(x + 185, y + 18, x + 132, y + 40, DARK, 1.0)
+    dashed_line(x + 180, y + 15, x + 112, y + 52, DARK, 1.0)
     fill_poly([(x + 150, y + 46), (x + 144, y + 54), (x + 156, y + 54)], DARK)
     fill_poly([(x + 132, y + 36), (x + 126, y + 44), (x + 138, y + 44)], DARK)
+    fill_poly([(x + 112, y + 48), (x + 106, y + 56), (x + 118, y + 56)], DARK)
     circle(x + 88, y + 60, 4, RED)
     circle(x + 130, y + 42, 4, RED)
+    # smoke plume over the Qeshm strike, fire core below it
+    circle(x + 192, y + 32, 8, (150, 150, 150))
+    circle(x + 202, y + 30, 6, (170, 170, 170))
+    circle(x + 198, y + 24, 5, (150, 150, 150))
+    circle(x + 198, y + 40, 5, (255, 120, 40))
     burst(x + 198, y + 40, 9, RED)
     draw_text(x + 40, y + 6, "GULF", 12, NAVY, bold=True)
     draw_text(x + 250, y + 8, "IRAN", 11, GREY, bold=True)
     draw_text(x + 168, y + 52, "QESHM", 11, INK, bold=True)
     draw_text(x + 58, y + 70, "BAHRAIN", 11, INK, bold=True)
     draw_text(x + 108, y + 20, "KUWAIT", 11, INK, bold=True)
+    draw_text(x + 262, y + 70, "HORMUZ", 11, INK, bold=True)
 
 
 def ill_kerch(x, y, w, h):
     rect(x, y, x + w, y + h, SKY)
     rect(x, y + 68, x + w, y + h, WATER)
+    # distant shores at the horizon
+    fill_poly([(x, y + 68), (x, y + 60), (x + 40, y + 62), (x + 50, y + 68)],
+              LAND)
+    fill_poly([(x + w - 50, y + 68), (x + w - 40, y + 62), (x + w, y + 60),
+               (x + w, y + 68)], LAND)
+    # clouds
+    for ccx, ccy in [(60, 26), (252, 28)]:
+        circle(x + ccx, y + ccy, 6, WHITE)
+        circle(x + ccx + 9, y + ccy + 2, 5, WHITE)
+        circle(x + ccx - 9, y + ccy + 2, 4, WHITE)
+    # birds
+    for bx, by in [(30, 30), (46, 24), (282, 34)]:
+        line(x + bx - 4, y + by, x + bx, y + by - 3, DARK, 1.0)
+        line(x + bx, y + by - 3, x + bx + 4, y + by, DARK, 1.0)
     rect(x + 8, y + 46, x + 140, y + 56, DARK)
     rect(x + 192, y + 46, x + w - 8, y + 56, DARK)
     for px in (36, 108, 216, 276):
         rect(x + px, y + 56, x + px + 8, y + 76, DARK)
+    # road centrelines + tiny cars on the decks
+    dashed_line(x + 12, y + 51, x + 136, y + 51, WHITE, 1.0, dash=6, gap=6)
+    dashed_line(x + 196, y + 51, x + 304, y + 51, WHITE, 1.0, dash=6, gap=6)
+    rect(x + 66, y + 41, x + 78, y + 46, RED)
+    rect(x + 69, y + 38, x + 75, y + 41, RED)
+    rect(x + 240, y + 41, x + 252, y + 46, WHITE)
+    rect(x + 243, y + 38, x + 249, y + 41, WHITE)
+    # the Crimea bridge's white arch over the left deck
+    arch = []
+    for i in range(25):
+        a = math.pi + math.pi * i / 24
+        arch.append((x + 74 + 26 * math.cos(a), y + 46 + 26 * math.sin(a)))
+    polyline(arch, WHITE, 3.0)
+    line(x + 58, y + 30, x + 58, y + 46, WHITE, 1.5)
+    line(x + 90, y + 30, x + 90, y + 46, WHITE, 1.5)
+    # fallen span + second chunk + splash foam
     fill_poly([(x + 150, y + 60), (x + 186, y + 76), (x + 179, y + 84),
                (x + 145, y + 68)], (120, 126, 134))
+    fill_poly([(x + 196, y + 68), (x + 210, y + 78), (x + 202, y + 84),
+               (x + 192, y + 74)], (120, 126, 134))
+    circle(x + 150, y + 82, 4, WHITE)
+    circle(x + 170, y + 84, 5, WHITE)
+    circle(x + 186, y + 82, 4, WHITE)
     line(x + 152, y + 84, x + 158, y + 76, WHITE, 2.0)
     line(x + 164, y + 86, x + 164, y + 78, WHITE, 2.0)
     line(x + 176, y + 84, x + 170, y + 77, WHITE, 2.0)
+    # boat in the strait, lower right
+    fill_poly([(x + 250, y + 76), (x + 282, y + 76), (x + 276, y + 82),
+               (x + 256, y + 82)], WHITE)
+    line(x + 266, y + 76, x + 266, y + 66, DARK, 1.5)
+    rect(x + 260, y + 70, x + 270, y + 76, NAVY2)
+    # smoke plume + fire at the gap
     circle(x + 152, y + 38, 8, (150, 150, 150))
     circle(x + 166, y + 30, 10, (170, 170, 170))
     circle(x + 180, y + 38, 7, (150, 150, 150))
+    circle(x + 160, y + 22, 6, (170, 170, 170))
+    circle(x + 174, y + 24, 7, (150, 150, 150))
+    circle(x + 166, y + 46, 5, (255, 120, 40))
     burst(x + 166, y + 50, 8, RED)
     draw_text(x + 40, y + 6, "KERCH STRAIT", 12, NAVY, bold=True)
     draw_text(x + w - 82, y + 6, "SPAN DOWN", 12, RED, bold=True)
@@ -834,13 +922,28 @@ def ill_kerch(x, y, w, h):
 def ill_shenzhen(x, y, w, h):
     """Air Force One on the tarmac at Shenzhen; Xi's rare airport welcome."""
     rect(x, y, x + w, y + h, SKY)
+    # clouds
+    for ccx, ccy in [(36, 12), (168, 10)]:
+        circle(x + ccx, y + ccy, 5, WHITE)
+        circle(x + ccx + 8, y + ccy + 2, 4, WHITE)
+        circle(x + ccx - 8, y + ccy + 2, 3.5, WHITE)
     for bx, top, bw in [(6, 40, 20), (30, 28, 24), (58, 44, 18), (80, 32, 22),
                         (106, 46, 20), (130, 26, 26), (160, 42, 18),
                         (182, 30, 24), (210, 46, 20), (234, 36, 22),
                         (260, 28, 24), (288, 44, 22)]:
         rect(x + bx, y + top, x + bx + bw, y + 62, NAVY2)
+    # lit windows on the towers
+    for wx, wy in [(36, 50), (42, 56), (116, 50), (136, 50), (142, 56),
+                   (188, 36), (266, 34), (272, 42), (12, 46), (216, 52)]:
+        rect(x + wx, y + wy, x + wx + 3, y + wy + 4, GOLD)
+    # control tower, right
+    rect(x + 300, y + 20, x + 306, y + 62, NAVY2)
+    rect(x + 296, y + 14, x + 310, y + 22, NAVY2)
+    rect(x + 298, y + 16, x + 308, y + 20, GOLD)
     rect(x, y + 62, x + w, y + h, (168, 170, 164))
     rect(x, y + 62, x + w, y + 64, WHITE)
+    # runway centreline dashes (under the carpet)
+    dashed_line(x + 8, y + 80, x + 310, y + 80, WHITE, 1.0, dash=8, gap=8)
     # plane: fuselage, wings, tail, engines
     fill_poly([(x + 16, y + 40), (x + 24, y + 32), (x + 150, y + 32),
                (x + 168, y + 38), (x + 150, y + 46), (x + 24, y + 46)],
@@ -852,10 +955,30 @@ def ill_shenzhen(x, y, w, h):
     rect(x + 16, y + 40, x + 168, y + 43, (40, 80, 160))
     for wx in range(30, 146, 10):
         circle(x + wx, y + 36, 1.2, NAVY2)
+    # cockpit windows + engines + wheels
+    fill_poly([(x + 18, y + 36), (x + 26, y + 33), (x + 30, y + 36),
+               (x + 22, y + 39)], NAVY2)
+    rect(x + 78, y + 56, x + 86, y + 60, DARK)
+    rect(x + 100, y + 56, x + 108, y + 60, DARK)
     rect(x + 96, y + 46, x + 102, y + 58, DARK)
     rect(x + 40, y + 46, x + 46, y + 58, DARK)
-    # red carpet from the plane door
+    circle(x + 43, y + 60, 2.5, DARK)
+    circle(x + 99, y + 60, 2.5, DARK)
+    # red carpet from the plane door, gold edging
     rect(x + 104, y + 46, x + 128, y + h, (179, 38, 30))
+    line(x + 105, y + 46, x + 105, y + h, GOLD, 1.0)
+    line(x + 127, y + 46, x + 127, y + h, GOLD, 1.0)
+    # two figures greeting on the carpet
+    circle(x + 111, y + 68, 2.5, (220, 180, 140))
+    rect(x + 108, y + 71, x + 114, y + 82, NAVY)
+    circle(x + 121, y + 68, 2.5, (220, 180, 140))
+    rect(x + 118, y + 71, x + 124, y + 82, (60, 60, 60))
+    line(x + 114, y + 74, x + 118, y + 74, (220, 180, 140), 1.5)
+    # limousine waiting by the flags
+    rect(x + 178, y + 68, x + 208, y + 76, (20, 20, 20))
+    rect(x + 184, y + 64, x + 202, y + 68, (20, 20, 20))
+    circle(x + 184, y + 76, 2.5, DARK)
+    circle(x + 202, y + 76, 2.5, DARK)
     _flag(x + 212, y + 8, "CN")
     _flag(x + 256, y + 8, "US")
     draw_text(x + 8, y + 68, "SHENZHEN", 12, NAVY, bold=True)
@@ -863,27 +986,53 @@ def ill_shenzhen(x, y, w, h):
 
 def icon_capitol(x, y, w, h):
     rect(x, y, x + w, y + h, (232, 228, 216))
+    # flag on the dome
+    line(x + 32, y + 8, x + 32, y + 15, DARK, 1.5)
+    rect(x + 33, y + 8, x + 43, y + 13, WHITE)
+    rect(x + 33, y + 10, x + 43, y + 11, (178, 34, 52))
+    rect(x + 33, y + 8, x + 37, y + 11, NAVY)
     circle(x + 32, y + 28, 13, NAVY2)
     rect(x + 17, y + 28, x + 47, y + 30, (232, 228, 216))
     rect(x + 19, y + 28, x + 45, y + 32, NAVY2)
     for cx in (21, 30, 39):
         rect(x + cx, y + 32, x + cx + 4, y + 44, NAVY2)
     rect(x + 17, y + 44, x + 47, y + 48, NAVY2)
+    rect(x + 13, y + 48, x + 51, y + 51, NAVY2)
+    # ground line
+    rect(x + 8, y + 51, x + 182, y + 53, (200, 192, 170))
     rect(x + 76, y + 10, x + 116, y + 20, (40, 80, 160))
     rect(x + 76, y + 24, x + 108, y + 34, RED)
+    # Alaska map with a star, top right
+    fill_poly([(x + 150, y + 14), (x + 168, y + 8), (x + 184, y + 12),
+               (x + 180, y + 22), (x + 164, y + 27), (x + 150, y + 22)],
+              (40, 80, 160))
+    burst(x + 166, y + 16, 4, GOLD)
     draw_text(x + 120, y + 8, "56", 15, NAVY, bold=True)
     draw_text(x + 112, y + 22, "44", 15, NAVY, bold=True)
     draw_text(x + 76, y + 38, "SENATE", 11, GREY, bold=True)
+    draw_text(x + 156, y + 28, "AK", 11, NAVY, bold=True)
 
 
 def icon_ebola(x, y, w, h):
     rect(x, y, x + w, y + h, (242, 232, 220))
-    fill_poly([(x + 10, y + 8), (x + 28, y + 5), (x + 48, y + 10),
-               (x + 60, y + 20), (x + 54, y + 36), (x + 38, y + 46),
-               (x + 24, y + 42), (x + 14, y + 32), (x + 6, y + 22)],
-              (180, 140, 100))
+    blob = [(x + 10, y + 8), (x + 28, y + 5), (x + 48, y + 10),
+            (x + 60, y + 20), (x + 54, y + 36), (x + 38, y + 46),
+            (x + 24, y + 42), (x + 14, y + 32), (x + 6, y + 22)]
+    fill_poly(blob, (180, 140, 100))
+    polyline(blob + [blob[0]], (140, 100, 60), 1.0)
+    # outbreak epicentres: Bunia and Beni
+    circle(x + 34, y + 18, 2.5, RED)
+    circle(x + 34, y + 18, 4.5, RED, fill=False, w=1.0)
+    circle(x + 44, y + 30, 2.5, RED)
+    circle(x + 44, y + 30, 4.5, RED, fill=False, w=1.0)
+    # medical emblem on a white disc
+    circle(x + 156, y + 18, 14, WHITE)
+    circle(x + 156, y + 18, 14, RED, fill=False, w=1.0)
     rect(x + 152, y + 6, x + 160, y + 30, RED)
     rect(x + 144, y + 12, x + 168, y + 22, RED)
+    # virus particles drifting from the map
+    _virus(x + 92, y + 14, 5, (200, 90, 80))
+    _virus(x + 110, y + 27, 4, (200, 90, 80))
     draw_text(x + 112, y + 36, "11,000+", 15, RED, bold=True)
 
 
@@ -891,15 +1040,37 @@ def icon_chip(x, y, w, h):
     rect(x, y, x + w, y + h, (226, 240, 220))
     rect(x + 10, y + 10, x + 40, y + 44, (30, 130, 60))
     rect(x + 19, y + 19, x + 31, y + 35, (20, 100, 45))
+    # circuit traces from the die to the edges
+    line(x + 19, y + 22, x + 12, y + 22, (20, 100, 45), 1.0)
+    line(x + 31, y + 22, x + 38, y + 22, (20, 100, 45), 1.0)
+    line(x + 19, y + 32, x + 12, y + 32, (20, 100, 45), 1.0)
+    line(x + 31, y + 32, x + 38, y + 32, (20, 100, 45), 1.0)
     for i in range(3):
         rect(x + 4, y + 14 + i * 9, x + 10, y + 18 + i * 9, (30, 130, 60))
         rect(x + 40, y + 14 + i * 9, x + 46, y + 18 + i * 9, (30, 130, 60))
+        rect(x + 14 + i * 9, y + 4, x + 18 + i * 9, y + 10, (30, 130, 60))
+        rect(x + 14 + i * 9, y + 44, x + 18 + i * 9, y + 50, (30, 130, 60))
+    # rising sales chart, right
+    line(x + 148, y + 50, x + 188, y + 50, GREY, 1.0)
+    for bx, bh in [(150, 8), (160, 14), (170, 20)]:
+        rect(x + bx, y + 50 - bh, x + bx + 7, y + 50, (30, 130, 60))
+    rect(x + 180, y + 22, x + 187, y + 50, GOLD_DK)
+    polyline([(x + 148, y + 44), (x + 163, y + 36), (x + 173, y + 30),
+              (x + 186, y + 20)], (20, 100, 45), 1.5)
+    fill_poly([(x + 186, y + 20), (x + 180, y + 22), (x + 184, y + 26)],
+              (20, 100, 45))
     draw_text(x + 56, y + 8, "$115.8bn", 18, (20, 100, 45), bold=True)
     draw_text(x + 56, y + 32, "UP 103%", 12, INK, bold=True)
 
 
 def icon_cyclone(x, y, w, h):
     rect(x, y, x + w, y + h, (220, 232, 240))
+    # India's east coast, right — the landfall shore
+    coast = [(x + 148, y + 54), (x + 156, y + 40), (x + 150, y + 28),
+             (x + 160, y + 16), (x + 168, y + 8), (x + 190, y + 6),
+             (x + 190, y + 54)]
+    fill_poly(coast, SAND)
+    polyline(coast, (170, 150, 110), 1.0)
     cx, cy = x + 30, y + 27
     pts = []
     for i in range(48):
@@ -907,8 +1078,16 @@ def icon_cyclone(x, y, w, h):
         r = 2 + i * 0.35
         pts.append((cx + r * math.cos(t), cy + r * math.sin(t) * 0.8))
     polyline(pts, NAVY2, 2.0)
+    circle(cx, cy, 3, WHITE)
+    # rain streaks around the storm
+    for rx, ry in [(50, 8), (56, 22), (14, 40), (44, 44)]:
+        line(x + rx, y + ry, x + rx + 4, y + ry + 6, (140, 170, 200), 1.5)
+    # track to landfall, along the bottom
+    dashed_line(x + 40, y + 48, x + 146, y + 48, RED, 1.5, dash=5, gap=3)
+    fill_poly([(x + 146, y + 48), (x + 138, y + 44), (x + 138, y + 52)], RED)
     draw_text(x + 62, y + 10, "110 km/h", 18, NAVY, bold=True)
     draw_text(x + 62, y + 34, "GUSTS", 11, GREY, bold=True)
+    draw_text(x + 158, y + 38, "INDIA", 11, INK, bold=True)
 
 
 def icon_knesset(x, y, w, h):
@@ -917,22 +1096,64 @@ def icon_knesset(x, y, w, h):
     for i in range(3):
         rect(x + 14 + i * 17, y + 18, x + 21 + i * 17, y + 42, NAVY2)
     rect(x + 10, y + 42, x + 70, y + 47, NAVY2)
+    rect(x + 6, y + 47, x + 74, y + 50, NAVY2)
+    # Israeli flag on a pole beside the house
+    line(x + 78, y + 8, x + 78, y + 42, DARK, 1.5)
+    rect(x + 79, y + 8, x + 93, y + 16, WHITE)
+    rect(x + 79, y + 8, x + 93, y + 10, (0, 87, 184))
+    rect(x + 79, y + 14, x + 93, y + 16, (0, 87, 184))
+    burst(x + 86, y + 12, 2.5, (0, 87, 184))
     rect(x + 96, y + 10, x + 180, y + 44, WHITE)
     frame(x + 96, y + 10, x + 180, y + 44, NAVY, 1)
+    # the vote as bars: 66 blue, 52 grey
+    rect(x + 96, y + 46, x + 151, y + 50, (40, 80, 160))
+    rect(x + 96, y + 51, x + 140, y + 54, (150, 150, 150))
     draw_text(x + 108, y + 18, "66–52", 18, NAVY, bold=True)
 
 
 def icon_cop(x, y, w, h):
     rect(x, y, x + w, y + h, (220, 235, 230))
     circle(x + 28, y + 27, 18, (80, 150, 200))
+    circle(x + 28, y + 27, 18, NAVY2, fill=False, w=1.0)
     fill_poly([(x + 20, y + 18), (x + 30, y + 14), (x + 35, y + 22),
                (x + 26, y + 26)], (90, 180, 90))
     fill_poly([(x + 24, y + 32), (x + 38, y + 34), (x + 33, y + 42),
                (x + 24, y + 39)], (90, 180, 90))
+    fill_poly([(x + 14, y + 26), (x + 20, y + 22), (x + 22, y + 30),
+               (x + 16, y + 34)], (90, 180, 90))
+    # cloud wisps on the globe
+    circle(x + 20, y + 22, 2.5, WHITE)
+    circle(x + 34, y + 36, 2.5, WHITE)
+    # thermometer with ticks
     rect(x + 62, y + 8, x + 68, y + 36, WHITE)
     frame(x + 62, y + 8, x + 68, y + 36, INK, 1)
     rect(x + 63, y + 22, x + 67, y + 36, RED)
     circle(x + 65, y + 40, 5, RED)
+    line(x + 62, y + 14, x + 65, y + 14, INK, 1.0)
+    line(x + 62, y + 20, x + 65, y + 20, INK, 1.0)
+    line(x + 62, y + 26, x + 65, y + 26, INK, 1.0)
+    # rising-temperature arrow
+    line(x + 74, y + 40, x + 74, y + 30, RED, 2.0)
+    fill_poly([(x + 74, y + 27), (x + 70, y + 32), (x + 78, y + 32)], RED)
+    # sun, top right
+    circle(x + 170, y + 10, 5, GOLD)
+    for a in range(4):
+        ang = math.pi * a / 2 + math.pi / 4
+        line(x + 170 + 7 * math.cos(ang), y + 10 + 7 * math.sin(ang),
+             x + 170 + 10 * math.cos(ang), y + 10 + 10 * math.sin(ang),
+             GOLD, 1.5)
+    # solar panels along the bottom
+    for px in (82, 104, 126):
+        fill_poly([(x + px, y + 46), (x + px + 14, y + 44),
+                   (x + px + 16, y + 50), (x + px + 2, y + 52)],
+                  (40, 80, 160))
+    # wind turbine, far right
+    line(x + 182, y + 52, x + 182, y + 26, DARK, 2.0)
+    for a in (-90, 30, 150):
+        ang = math.radians(a)
+        line(x + 182, y + 22, x + 182 + 7 * math.cos(ang),
+             y + 22 + 7 * math.sin(ang), DARK, 2.0)
+    circle(x + 182, y + 22, 2, DARK)
     draw_text(x + 80, y + 8, "COP31", 15, NAVY, bold=True)
     draw_text(x + 80, y + 28, "75 BACK 35x35", 12, RED, bold=True)
 
@@ -942,10 +1163,25 @@ def icon_voyager(x, y, w, h):
     for sx, sy in [(10, 8), (22, 14), (52, 6), (62, 20), (150, 8),
                    (140, 36), (16, 40), (120, 44)]:
         circle(x + sx, y + sy, 1.5, WHITE)
-    circle(x + 34, y + 27, 10, GOLD)
-    circle(x + 37, y + 25, 8, (16, 24, 44))
-    rect(x + 44, y + 24, x + 52, y + 30, GOLD)
-    line(x + 52, y + 27, x + 62, y + 18, GOLD, 2.0)
+    # Earth, left
+    circle(x + 28, y + 27, 10, (70, 130, 200))
+    circle(x + 28, y + 27, 10, WHITE, fill=False, w=1.0)
+    fill_poly([(x + 22, y + 20), (x + 30, y + 18), (x + 33, y + 24),
+               (x + 26, y + 27)], (90, 180, 90))
+    fill_poly([(x + 24, y + 32), (x + 34, y + 33), (x + 31, y + 38),
+               (x + 24, y + 37)], (90, 180, 90))
+    # dashed trajectory along the bottom
+    dashed_line(x + 40, y + 47, x + 150, y + 47, GOLD, 1.5, dash=5, gap=3)
+    # Voyager spacecraft, bottom right
+    rect(x + 158, y + 42, x + 168, y + 50, GOLD)
+    circle(x + 172, y + 42, 5, GOLD)
+    circle(x + 174, y + 41, 4, (16, 24, 44))
+    line(x + 158, y + 46, x + 150, y + 42, GOLD, 1.5)
+    line(x + 168, y + 44, x + 176, y + 36, GOLD, 1.5)
+    circle(x + 176, y + 35, 1.5, GOLD)
+    # a distant world, top right
+    circle(x + 180, y + 10, 4, (150, 180, 220))
+    line(x + 175, y + 12, x + 185, y + 8, (150, 180, 220), 1.0)
     draw_text(x + 70, y + 8, "1 LIGHT-DAY", 15, WHITE, bold=True)
     draw_text(x + 70, y + 30, "25.9bn km OUT", 11, (200, 200, 200), bold=True)
 
@@ -963,6 +1199,15 @@ def icon_measles(x, y, w, h):
     _virus(x + 26, y + 26, 11, RED)
     _virus(x + 52, y + 36, 7, (200, 90, 80))
     _virus(x + 44, y + 12, 5, (200, 90, 80))
+    _virus(x + 66, y + 46, 4, (200, 90, 80))
+    _virus(x + 12, y + 44, 3.5, (200, 90, 80))
+    # broken shield: the lost elimination status
+    shield = [(x + 160, y + 6), (x + 182, y + 12), (x + 182, y + 30),
+              (x + 160, y + 48), (x + 138, y + 30), (x + 138, y + 12)]
+    fill_poly(shield, WHITE)
+    polyline(shield + [shield[0]], NAVY2, 1.5)
+    polyline([(x + 152, y + 14), (x + 158, y + 22), (x + 154, y + 28),
+              (x + 160, y + 34), (x + 156, y + 42)], RED, 2.0)
     draw_text(x + 72, y + 10, "5,400", 18, RED, bold=True)
     draw_text(x + 72, y + 34, "CASES", 11, INK, bold=True)
 
@@ -980,17 +1225,43 @@ def icon_drones(x, y, w, h):
     for sx, sy in [(14, 8), (40, 14), (88, 6), (120, 12), (168, 8),
                    (150, 26), (60, 26), (28, 30)]:
         circle(x + sx, y + sy, 1.2, WHITE)
+    # moon
+    circle(x + 95, y + 6, 5, (230, 230, 200))
+    circle(x + 93, y + 5, 1.5, (200, 200, 170))
     _drone(x + 30, y + 16, 7, (200, 205, 215))
     _drone(x + 70, y + 10, 6, (200, 205, 215))
     _drone(x + 110, y + 18, 7, (200, 205, 215))
     _drone(x + 150, y + 10, 6, (200, 205, 215))
+    _drone(x + 90, y + 24, 5, (200, 205, 215))
     burst(x + 168, y + 26, 7, (255, 150, 50))
+    # interceptor rising to meet a drone, top right
+    dashed_line(x + 189, y + 54, x + 178, y + 16, (255, 200, 100), 1.0,
+                dash=4, gap=3)
+    burst(x + 178, y + 18, 4, (255, 150, 50))
+    _drone(x + 180, y + 28, 3.5, (200, 205, 215))
+    circle(x + 178, y + 33, 1, (255, 150, 50))
+    circle(x + 183, y + 35, 1, (255, 150, 50))
+    # city silhouette along the bottom
+    for bx, bw, bh in [(8, 16, 6), (30, 14, 8), (150, 14, 6), (170, 10, 7)]:
+        rect(x + bx, y + 54 - bh, x + bx + bw, y + 54, (14, 20, 36))
+    rect(x + 12, y + 50, x + 14, y + 52, GOLD)
+    rect(x + 34, y + 48, x + 36, y + 50, GOLD)
+    rect(x + 154, y + 50, x + 156, y + 52, GOLD)
     draw_text(x + 8, y + 32, "141 DRONES", 15, WHITE, bold=True)
     draw_text(x + 106, y + 34, "126 DOWNED", 11, GOLD, bold=True)
 
 
 def icon_horn(x, y, w, h):
     rect(x, y, x + w, y + h, (238, 230, 205))
+    # highland ridges, left and right
+    fill_poly([(x + 5, y + 54), (x + 25, y + 40), (x + 45, y + 54)],
+              (190, 175, 140))
+    fill_poly([(x + 145, y + 54), (x + 165, y + 40), (x + 185, y + 54)],
+              (190, 175, 140))
+    fill_poly([(x + 20, y + 44), (x + 25, y + 40), (x + 30, y + 44)],
+              WHITE)
+    fill_poly([(x + 160, y + 44), (x + 165, y + 40), (x + 170, y + 44)],
+              WHITE)
     dashed_line(x + 95, y + 4, x + 95, y + 50, DARK, 1.0, dash=4, gap=3)
     fill_poly([(x + 30, y + 20), (x + 62, y + 20), (x + 62, y + 15),
                (x + 78, y + 23), (x + 62, y + 31), (x + 62, y + 26),
@@ -998,6 +1269,23 @@ def icon_horn(x, y, w, h):
     fill_poly([(x + 160, y + 20), (x + 128, y + 20), (x + 128, y + 15),
                (x + 112, y + 23), (x + 128, y + 31), (x + 128, y + 26),
                (x + 160, y + 26)], (180, 40, 30))
+    # tanks facing the border
+    rect(x + 45, y + 37, x + 61, y + 43, DARK)
+    rect(x + 49, y + 33, x + 57, y + 37, DARK)
+    line(x + 61, y + 35, x + 69, y + 35, DARK, 2.0)
+    rect(x + 129, y + 37, x + 145, y + 43, DARK)
+    rect(x + 133, y + 33, x + 141, y + 37, DARK)
+    line(x + 129, y + 35, x + 121, y + 35, DARK, 2.0)
+    # Badme flashpoint star on the border
+    burst(x + 95, y + 32, 3, RED)
+    # flags beside the names
+    rect(x + 82, y + 8, x + 94, y + 10, (30, 110, 60))
+    rect(x + 82, y + 10, x + 94, y + 12, (240, 200, 40))
+    rect(x + 82, y + 12, x + 94, y + 14, (180, 40, 30))
+    fill_poly([(x + 118, y + 8), (x + 118, y + 14), (x + 124, y + 11)],
+              (180, 40, 30))
+    rect(x + 124, y + 8, x + 130, y + 11, (30, 110, 60))
+    rect(x + 124, y + 11, x + 130, y + 14, (0, 87, 184))
     draw_text(x + 28, y + 6, "ETHIOPIA", 11, (30, 110, 60), bold=True)
     draw_text(x + 132, y + 6, "ERITREA", 11, (180, 40, 30), bold=True)
     draw_text(x + 95, y + 36, "BADME", 12, RED, bold=True, align="center")
